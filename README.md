@@ -36,6 +36,10 @@ The Claude Code environment must be allowed to reach:
 - `api.twilio.com` (Twilio SMS API)
 - `sumup.com`, `me.sumup.com`, `api.sumup.com`, `pay.sumup.com` and other
   `*.sumup.com` subdomains (dashboard + payment links)
+- Google sign-in domains for the "Continue with Google" login as
+  `info@chateaudecharmeil.com`: `accounts.google.com` (already reachable),
+  plus `*.gstatic.com`, `*.googleapis.com`, `apis.google.com` if page assets
+  fail to load
 
 Configure this in the environment's network settings at
 https://claude.ai/code (environment → Network access). As of setup time these
@@ -53,8 +57,9 @@ is changed.
 | `TWILIO_ACCOUNT_SID` | Twilio account SID (starts with `AC`) |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token |
 | `TWILIO_FROM_NUMBER` | Sending number in E.164, e.g. `+33XXXXXXXXX`, or an alphanumeric sender ID |
-| `SUMUP_EMAIL` | SumUp dashboard login email |
-| `SUMUP_PASSWORD` | SumUp dashboard password |
+| `GOOGLE_EMAIL` | `info@chateaudecharmeil.com` — the Google account used for SumUp "Continue with Google" sign-in (required) |
+| `GOOGLE_PASSWORD` | Password for that Google account |
+| `SUMUP_EMAIL` / `SUMUP_PASSWORD` | Optional fallback: direct SumUp login, only if Google SSO is blocked |
 
 ### 3. Gmail connector
 

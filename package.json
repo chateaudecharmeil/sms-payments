@@ -1,0 +1,9 @@
+{
+  "name": "sms-payments",
+  "private": true,
+  "type": "module",
+  "description": "Gmail reservation → SumUp payment link → Twilio SMS automation",
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

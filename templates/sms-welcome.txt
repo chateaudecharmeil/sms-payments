@@ -1,0 +1,7 @@
+Bonjour {PRENOM}, et bienvenue au Château de Charmeil !
+
+Nous avons bien reçu votre réservation ({DETAILS}). Pour la confirmer, merci de régler {MONTANT} € via notre lien de paiement sécurisé :
+{LIEN}
+
+Merci de votre confiance, et à très bientôt !
+Château de Charmeil

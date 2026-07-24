@@ -33,13 +33,16 @@ of `chateaudecharmeil/sms-payments`.
 3. `npm test` — if the unit tests fail, stop and report. Do not run a cycle on a
    broken library.
 4. Check the environment variables listed in `README.md` are all set.
-5. Decide how SMS will be sent this run — there are two routes, and the Routine
-   should use whichever is available:
-   - **Twilio connector (preferred)**: run `ListConnectors`. If Twilio shows
-     `enabledInChat: true`, load its tools with ToolSearch and send through them.
-     This route does **not** need `api.twilio.com` to be reachable.
-   - **Twilio REST API**: `scripts/send-sms.sh`, which needs egress to
-     `api.twilio.com` and the `TWILIO_*` variables.
+5. SMS goes through the Twilio REST API (`scripts/send-sms.sh`), which needs
+   egress to `api.twilio.com` and the `TWILIO_*` variables. (The "Twilio"
+   connector is a documentation search tool only — it cannot send messages.)
+   Facts verified 2026-07-24: the account (`TWILIO_ACCOUNT_SID`, an `AC…` value)
+   is Full/active; it owns **no phone number**, so the sender is the alphanumeric
+   ID `CHARMEIL` (fine for FR/CH/LU/DE/UK/IE; **Italy requires pre-registration
+   of alpha senders** — flag Italian guests if delivery fails). A send that
+   returns Twilio error **20003 "Primary compliance profile is not approved"**
+   means the owner has not completed KYC in the Twilio Console → Trust Hub;
+   record nothing, skip all sends this run, and report it.
 6. Check network egress:
    ```
    curl -sS -o /dev/null -w '%{http_code}\n' https://me.sumup.com/     # any status is fine

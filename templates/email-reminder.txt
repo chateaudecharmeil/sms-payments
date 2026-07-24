@@ -1,0 +1,15 @@
+Subject: Rappel — solde de votre réservation du {DATE_ARRIVEE} au Château de Charmeil
+Bonjour {PRENOM},
+
+Sauf erreur de notre part, le solde de {MONTANT} € pour votre séjour du {DATE_ARRIVEE} n'a pas encore été réglé.
+
+Vous pouvez le régler en ligne via ce lien sécurisé :
+
+{LIEN}
+
+Si vous avez déjà effectué le paiement, merci d'ignorer ce message.
+
+Bien cordialement,
+Château de Charmeil
+12 Rue du Château, 03110 Charmeil
+info@chateaudecharmeil.com

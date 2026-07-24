@@ -1,0 +1,6 @@
+Bonjour {PRENOM}, petit rappel : le solde de {MONTANT} € pour votre séjour du {DATE_ARRIVEE} au Château de Charmeil n'est pas encore réglé.
+
+Lien de paiement :
+{LIEN}
+
+Merci de votre confiance !

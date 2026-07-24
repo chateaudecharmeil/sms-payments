@@ -1,0 +1,11 @@
+Subject: Paiement reçu — votre réservation du {DATE_ARRIVEE} est confirmée
+Bonjour {PRENOM},
+
+Nous avons bien reçu votre paiement de {MONTANT} €. Votre réservation du {DATE_ARRIVEE} est confirmée.
+
+Nous nous réjouissons de vous accueillir au Château de Charmeil.
+
+Bien cordialement,
+Château de Charmeil
+12 Rue du Château, 03110 Charmeil
+info@chateaudecharmeil.com

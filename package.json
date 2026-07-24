@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "description": "Gmail reservation → SumUp payment link → Twilio SMS automation",
+  "scripts": {
+    "test": "node --test scripts/*.test.mjs",
+    "plan": "node scripts/state.mjs plan"
+  },
   "dependencies": {
     "playwright": "^1.49.0"
   }

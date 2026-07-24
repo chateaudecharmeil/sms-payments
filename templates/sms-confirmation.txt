@@ -1,3 +1,3 @@
-Merci {PRENOM} ! Nous avons bien reçu votre paiement de {MONTANT} €. Votre réservation est confirmée.
+Merci {PRENOM} ! Nous avons bien reçu votre paiement de {MONTANT} €.
 
-Nous nous réjouissons de vous accueillir au Château de Charmeil. À très bientôt !
+Votre réservation du {DATE_ARRIVEE} est confirmée. Nous nous réjouissons de vous accueillir au Château de Charmeil !

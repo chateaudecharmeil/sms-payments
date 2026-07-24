@@ -1,0 +1,15 @@
+Subject: Château de Charmeil — solde de votre réservation du {DATE_ARRIVEE}
+Bonjour {PRENOM},
+
+Bienvenue au Château de Charmeil !
+
+Pour finaliser votre réservation du {DATE_ARRIVEE}, il reste {MONTANT} € à régler. Vous pouvez payer en ligne, en toute sécurité, via ce lien :
+
+{LIEN}
+
+Nous restons à votre disposition pour toute question.
+
+Bien cordialement,
+Château de Charmeil
+12 Rue du Château, 03110 Charmeil
+info@chateaudecharmeil.com

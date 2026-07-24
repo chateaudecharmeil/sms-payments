@@ -1,4 +1,5 @@
 {
+  "version": 2,
   "processedEmailIds": [
     "19f5fb1597e6906f",
     "19f5f5d3a93108e1",
@@ -53,5 +54,5 @@
     "19f196698066c940"
   ],
   "needsAttention": [],
-  "payments": []
+  "reservations": []
 }

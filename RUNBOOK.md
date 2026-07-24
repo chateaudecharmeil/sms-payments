@@ -133,24 +133,27 @@ past), it goes out **on this run**.
 Only for reservations in the plan's "Send payment link now" group that do not yet
 have a link.
 
-There are two routes. **Use the dashboard (3b) until the API route has been
-verified once**, because the 10% VAT requirement is the open question — see 3a.
+There are two routes. **The dashboard (3b) is primary**, because of VAT — see 3a.
 
-### 3a — REST API (`SUMUP_API_KEY`) — verify before trusting
+### 3a — REST API (`SUMUP_API_KEY`) — fallback only, VAT limitation confirmed
 
-`scripts/sumup-api.mjs` talks to `api.sumup.com` with the merchant's secret key,
-which avoids the Google sign-in and the whole browser stack. **No call in that
-script has ever run against the real API** (the host is blocked), so the first
-time egress is open:
+`scripts/sumup-api.mjs` talks to `api.sumup.com` with the merchant's secret key.
+Its request shapes were checked against SumUp's official OpenAPI spec
+(github.com/sumup/sumup-openapi): `POST /v0.1/checkouts` with
+`hosted_checkout: {enabled: true}` returns a `hosted_checkout_url`, the
+guest-facing payment page; checkout status is `PENDING → PAID / FAILED / EXPIRED`.
+
+**Confirmed limitation: the API has no VAT field on checkout creation** —
+`vat_rate` exists only in read-only transaction reporting. Only the dashboard's
+payment-link form can stamp the 10% TVA. So use this route **only if the owner
+has explicitly accepted API links without the TVA receipt line** (e.g. if the
+browser route is broken and links must go out). The calls themselves have not
+yet run live (host blocked); the first time egress is open, run the read-only
+check regardless of route:
 
 ```bash
 node scripts/sumup-api.mjs verify        # read-only; confirms key + merchant code
 ```
-
-If that succeeds, try one `create-link` for a **small** amount and check on the
-dashboard that the resulting link is correct **and carries 10% VAT**. If the API
-cannot set the VAT rate, abandon this route and use 3b — the VAT rate is not
-optional. Report what you find so the runbook can be updated.
 
 ### 3b — Dashboard in Chromium (current primary route)
 

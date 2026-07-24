@@ -7,11 +7,19 @@
 //
 // Needs SUMUP_API_KEY (a `sup_sk_…` secret key) and egress to api.sumup.com.
 //
-// ⚠️  UNVERIFIED. api.sumup.com is currently blocked by the environment's network
-// policy, so not one call in this file has been executed against the real API.
-// Run `verify` first once egress is open: it does nothing but read the merchant
-// profile, so it is safe, and it confirms both the key and the request shape
-// before anything tries to take a guest's money.
+// Request shapes checked against SumUp's official OpenAPI spec
+// (github.com/sumup/sumup-openapi, fetched 2026-07-24): POST /v0.1/checkouts
+// with `hosted_checkout: {enabled: true}` returns a `hosted_checkout_url` —
+// that is the guest-facing payment page.
+//
+// ⚠️  Two caveats:
+// - api.sumup.com is blocked by the environment's network policy, so these
+//   calls have not yet been executed live. Run `verify` (read-only) first.
+// - The spec has NO VAT field on checkout creation — `vat_rate` exists only in
+//   read-only transaction reporting. The owner requires 10% TVA on every link,
+//   which only the dashboard's payment-link form can set. So this client is a
+//   fallback, and the browser route in RUNBOOK Step 3b stays primary unless
+//   the owner decides API links without a receipt VAT line are acceptable.
 //
 // Requests go through curl rather than fetch so they pick up the session's
 // egress proxy and its CA bundle, exactly like scripts/send-sms.sh.
@@ -120,12 +128,15 @@ function createLink(values) {
     ?? verifyQuietly()?.merchant_profile?.merchant_code;
   if (!merchantCode) throw new Error('could not determine the merchant code — set SUMUP_MERCHANT_CODE');
 
+  // Per the official spec: hosted_checkout.enabled is what makes SumUp return
+  // a guest-facing payment page URL.
   const payload = {
     checkout_reference: `${r.bookingRef ?? r.emailId}-${Date.now()}`,
     amount: Number(r.amountEUR),
     currency: 'EUR',
     merchant_code: merchantCode,
     description: r.paymentDescription,
+    hosted_checkout: { enabled: true },
   };
 
   const checkout = call('POST', '/v0.1/checkouts', payload);
@@ -135,10 +146,11 @@ function createLink(values) {
   console.log(`description: ${r.paymentDescription}`);
   console.log(`amount:      ${r.amountEUR} EUR`);
   console.log(`checkout id: ${checkout?.id ?? '(none returned)'}`);
+  console.log(`payment URL: ${checkout?.hosted_checkout_url ?? '(none returned — do NOT send anything)'}`);
   console.log(
-    '\nNOTE: confirm the guest-facing payment URL in the response above, and confirm\n' +
-    'the 10% VAT is applied. If the API cannot set VAT, create the link in the\n' +
-    'dashboard instead (RUNBOOK Step 3) — the VAT rate is not optional.',
+    '\n⚠️  The API cannot set a VAT rate (confirmed against the official spec).\n' +
+    'Use this route only if the owner has accepted links without the 10% TVA\n' +
+    'receipt line — otherwise create the link in the dashboard (RUNBOOK 3b).',
   );
   return checkout;
 }

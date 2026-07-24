@@ -53,7 +53,14 @@
     "19f1d3dbbf37e378",
     "19f196698066c940"
   ],
-  "needsAttention": [],
+  "needsAttention": [
+    {
+      "emailId": "19f61d8657400860",
+      "reason": "arrival-passed-before-link",
+      "note": "Guest stayed 21-23/07, departed before automation go-live; 2,44 EUR tax never collected — owner to decide whether to chase",
+      "seenAt": "2026-07-24T18:40:10.136Z"
+    }
+  ],
   "reservations": [
     {
       "emailId": "19f94fa064d3bd14",
@@ -457,6 +464,60 @@
       "reminders": [],
       "lastReminderOn": null,
       "createdAt": "2026-07-24T18:39:43.343Z",
+      "linkSentOn": null,
+      "paidAt": null
+    },
+    {
+      "emailId": "19f67511a6043d64",
+      "bookingRef": "586-980-124",
+      "channel": "Booking.com",
+      "customerName": "Brenda Barrett",
+      "firstName": "Brenda",
+      "lastName": "BARRETT",
+      "phone": "+353868241059",
+      "phoneStatus": "valid",
+      "email": "bbarre.445378@guest.booking.com",
+      "arrivalDate": "2026-07-28",
+      "departureDate": "2026-07-29",
+      "nights": 1,
+      "amountEUR": "1.22",
+      "sendOn": "2026-07-24",
+      "deliveryChannel": "sms",
+      "paymentDescription": "Chateau de Charmeil - 28/07/2026 - BARRETT",
+      "paymentLinkUrl": null,
+      "status": "scheduled",
+      "welcomeSid": null,
+      "confirmationSid": null,
+      "reminders": [],
+      "lastReminderOn": null,
+      "createdAt": "2026-07-24T18:39:54.515Z",
+      "linkSentOn": null,
+      "paidAt": null
+    },
+    {
+      "emailId": "19f61d8657400860",
+      "bookingRef": "086-234-294",
+      "channel": "Booking.com",
+      "customerName": "Elise Bouteiller",
+      "firstName": "Elise",
+      "lastName": "BOUTEILLER",
+      "phone": "+33626124144",
+      "phoneStatus": "valid",
+      "email": "eboute.544373@guest.booking.com",
+      "arrivalDate": "2026-07-21",
+      "departureDate": "2026-07-23",
+      "nights": 2,
+      "amountEUR": "2.44",
+      "sendOn": "2026-07-24",
+      "deliveryChannel": "sms",
+      "paymentDescription": "Chateau de Charmeil - 21/07/2026 - BOUTEILLER",
+      "paymentLinkUrl": null,
+      "status": "needs_attention",
+      "welcomeSid": null,
+      "confirmationSid": null,
+      "reminders": [],
+      "lastReminderOn": null,
+      "createdAt": "2026-07-24T18:40:10.077Z",
       "linkSentOn": null,
       "paidAt": null
     }

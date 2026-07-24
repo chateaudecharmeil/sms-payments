@@ -27,6 +27,7 @@ The full procedure the Routine follows each cycle is in [`RUNBOOK.md`](RUNBOOK.m
 | `scripts/state.mjs` | The only sanctioned way to read/modify `state/state.json` |
 | `scripts/message.mjs` | Renders the French SMS/email for a reservation |
 | `scripts/send-sms.sh` | Sends an SMS via the Twilio REST API (curl, proxy-friendly) |
+| `scripts/sumup-api.mjs` | SumUp REST client (unverified — see below) |
 | `scripts/browser-lib.mjs` | Playwright helper: Chromium with persistent profile + proxy |
 | `scripts/sumup-open.mjs` | Opens a SumUp page and screenshots it |
 | `templates/*.txt` | French SMS and email templates |
@@ -70,6 +71,8 @@ environment must be allowed to reach `api.twilio.com` — see §3.
 | `TWILIO_AUTH_TOKEN` | Alternative to the API key pair: the account's master token |
 | `TWILIO_FROM_NUMBER` | Sending number in E.164, e.g. `+33…` |
 | `TWILIO_MESSAGING_SERVICE_SID` | Alternative to the from-number: an `MG…` messaging service |
+| `SUMUP_API_KEY` | A `sup_sk_…` secret key — enables the REST route instead of the browser |
+| `SUMUP_MERCHANT_CODE` | Optional; otherwise read from the API at run time |
 | `GOOGLE_EMAIL` | `info@chateaudecharmeil.com` — used for SumUp "Continue with Google" |
 | `GOOGLE_PASSWORD` | Password for that Google account |
 | `SUMUP_EMAIL` / `SUMUP_PASSWORD` | Optional fallback if Google SSO is blocked |
@@ -108,9 +111,14 @@ never sends email directly (see the limitation below).
   this fully automatic needs an SMTP app password or a transactional email
   provider.
 - **SumUp is driven through the browser**, which is the fragile part of the chain
-  (login challenges, UI changes). If it becomes unreliable, the SumUp public API
-  (`api.sumup.com`, API key from the developer settings) would replace Step 3 of
-  the runbook without changing anything else.
+  (login challenges, UI changes). `scripts/sumup-api.mjs` implements the REST
+  alternative, but **none of its calls have ever run against the real API**
+  because `api.sumup.com` is blocked — so it is not the primary route yet. Run
+  `node scripts/sumup-api.mjs verify` (read-only) as soon as egress is open.
+- **The 10% VAT rate is the open question for the API route.** The dashboard has
+  an explicit VAT field; whether the checkouts endpoint accepts one is unverified.
+  If it does not, link creation stays in the browser, because the VAT rate is a
+  hard requirement.
 
 ## Development
 

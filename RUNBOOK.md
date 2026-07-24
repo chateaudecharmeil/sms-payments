@@ -128,10 +128,31 @@ The scheduling rule it applies: the payment link goes out **7 days before
 arrival**; if the booking arrives less than 7 days from now (or is already in the
 past), it goes out **on this run**.
 
-## Step 3 — Create the SumUp payment link (Chromium)
+## Step 3 — Create the SumUp payment link
 
 Only for reservations in the plan's "Send payment link now" group that do not yet
 have a link.
+
+There are two routes. **Use the dashboard (3b) until the API route has been
+verified once**, because the 10% VAT requirement is the open question — see 3a.
+
+### 3a — REST API (`SUMUP_API_KEY`) — verify before trusting
+
+`scripts/sumup-api.mjs` talks to `api.sumup.com` with the merchant's secret key,
+which avoids the Google sign-in and the whole browser stack. **No call in that
+script has ever run against the real API** (the host is blocked), so the first
+time egress is open:
+
+```bash
+node scripts/sumup-api.mjs verify        # read-only; confirms key + merchant code
+```
+
+If that succeeds, try one `create-link` for a **small** amount and check on the
+dashboard that the resulting link is correct **and carries 10% VAT**. If the API
+cannot set the VAT rate, abandon this route and use 3b — the VAT rate is not
+optional. Report what you find so the runbook can be updated.
+
+### 3b — Dashboard in Chromium (current primary route)
 
 1. Drive the browser with `scripts/browser-lib.mjs` (persistent profile in
    `~/.sumup-profile`, proxy pre-configured). Start with

@@ -59,6 +59,12 @@
       "reason": "arrival-passed-before-link",
       "note": "Guest stayed 21-23/07, departed before automation go-live; 2,44 EUR tax never collected — owner to decide whether to chase",
       "seenAt": "2026-07-24T18:40:10.136Z"
+    },
+    {
+      "emailId": "19f846d5a850835e",
+      "reason": "possible-local-payment",
+      "note": "Jean-Sebastien Hall owes 219.62€ — matching SumUp transaction(s): 219.62€ on 2026-07-24 (dd8f7dd8-036a-43e9-ac10-e1db8a9c0c56). Owner: 'state.mjs paid' if this was their payment, 'state.mjs resume' to keep chasing.",
+      "seenAt": "2026-07-24T19:38:39.917Z"
     }
   ],
   "reservations": [
@@ -134,7 +140,7 @@
       "deliveryChannel": "email",
       "paymentDescription": "Chateau de Charmeil - 24/07/2026 - HALL",
       "paymentLinkUrl": null,
-      "status": "scheduled",
+      "status": "needs_attention",
       "welcomeSid": null,
       "confirmationSid": null,
       "reminders": [],

@@ -28,6 +28,7 @@ import {
   formatDateFR,
   isUsableEmail,
   isZeroAmount,
+  matchLocalPayments,
   normalizePhone,
   parseAmountEUR,
   parseFrenchDate,
@@ -98,6 +99,7 @@ const OPTIONS = {
   reason: { type: 'string' },
   note: { type: 'string' },
   today: { type: 'string' },
+  file: { type: 'string' },
   json: { type: 'boolean' },
 };
 
@@ -250,6 +252,55 @@ function markProcessed(state, emailId) {
   if (!state.processedEmailIds.includes(emailId)) state.processedEmailIds.push(emailId);
 }
 
+/**
+ * Reconcile open reservations against SumUp transactions, so a guest who
+ * already paid at the property (card reader) is never chased.
+ * `--file` is the JSON printed by `sumup-api.mjs transactions --since ...`.
+ * Confident matches are put ON HOLD (needs_attention, reason
+ * `possible-local-payment`) — the owner then runs `paid` or `resume`.
+ * Never confirms a payment by itself. Idempotent.
+ */
+function cmdReconcile(state, values) {
+  const file = required(values, 'file');
+  const transactions = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const { holds, ambiguous } = matchLocalPayments(state.reservations, transactions);
+
+  const lines = [];
+  let held = 0;
+  for (const { reservation: r, transactions: ts } of holds) {
+    const detail = ts.map((t) => `${t.amount}€ on ${String(t.timestamp).slice(0, 10)} (${t.transaction_id})`).join(', ');
+    if (r.status !== 'needs_attention') {
+      r.status = 'needs_attention';
+      held += 1;
+    }
+    addAttention(state, r.emailId, 'possible-local-payment',
+      `${r.customerName} owes ${r.amountEUR}€ — matching SumUp transaction(s): ${detail}. ` +
+      `Owner: 'state.mjs paid' if this was their payment, 'state.mjs resume' to keep chasing.`);
+    lines.push(`  HOLD ${r.customerName} (${r.amountEUR}€) — ${detail}`);
+  }
+  for (const a of ambiguous) {
+    lines.push(
+      `  AMBIGUOUS ${a.amountEUR}€: ${a.reservations.length} guests owe this amount ` +
+      `(${a.reservations.map((r) => r.lastName).join(', ')}) and ${a.transactions.length} matching ` +
+      `transaction(s) exist — cannot tell who paid; nothing held, owner to check.`,
+    );
+  }
+  if (!lines.length) lines.push('  no local-payment matches — all clear');
+
+  return { decision: `reconcile: ${held} newly held, ${ambiguous.length} ambiguous`, report: lines.join('\n') };
+}
+
+/** Owner says a held reservation was NOT paid locally: return it to its flow. */
+function cmdResume(state, values) {
+  const r = findReservation(state, required(values, 'email-id'));
+  if (r.status !== 'needs_attention') {
+    return { reservation: r, decision: `nothing to resume (status ${r.status})` };
+  }
+  r.status = r.linkSentOn ? 'link_sent' : 'scheduled';
+  state.needsAttention = state.needsAttention.filter((a) => a.emailId !== r.emailId);
+  return { reservation: r, decision: `resumed as ${r.status}` };
+}
+
 /** Print everything the current run has to do. */
 function cmdPlan(state, values) {
   const today = values.today || todayISO();
@@ -268,6 +319,8 @@ const COMMANDS = {
   remind: cmdRemind,
   paid: cmdPaid,
   attention: cmdAttention,
+  reconcile: cmdReconcile,
+  resume: cmdResume,
   plan: cmdPlan,
 };
 
@@ -331,6 +384,7 @@ function main(argv) {
     console.log(formatPlan(result));
   } else {
     console.log(result.decision ?? 'ok');
+    if (result.report) console.log(result.report);
     if (result.reservation) {
       const r = result.reservation;
       console.log(`  ${r.customerName} — ${formatAmountFR(r.amountEUR)} € — arr. ${formatDateFR(r.arrivalDate)} — status ${r.status}`);

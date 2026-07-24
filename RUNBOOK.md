@@ -131,6 +131,33 @@ The scheduling rule it applies: the payment link goes out **7 days before
 arrival**; if the booking arrives less than 7 days from now (or is already in the
 past), it goes out **on this run**.
 
+## Step 2b — Check for payments collected locally (before sending ANYTHING)
+
+Guests sometimes pay their balance at the property (SumUp card reader) — the
+owner says this shouldn't normally happen, but a guest must never be chased for
+money already taken. On every run, before Step 3:
+
+```bash
+node scripts/sumup-api.mjs transactions --since <today minus 21 days> > /tmp/sumup-tx.json
+node scripts/state.mjs reconcile --file /tmp/sumup-tx.json
+```
+
+`reconcile` (read-only on SumUp, idempotent on state) matches open amounts due
+against successful card payments:
+
+- **Unique match** (one open reservation owes that exact amount, a transaction
+  for it exists on/after the booking was recorded) → the reservation is put
+  **on hold** (`needs_attention`, reason `possible-local-payment`) and excluded
+  from all sends. Report it: the owner replies with either
+  `state.mjs paid --email-id <id>` (it was their payment — confirmation SMS
+  can then be sent) or `state.mjs resume --email-id <id>` (coincidence — chasing
+  resumes).
+- **Ambiguous match** (several guests owe the same amount, e.g. the €1,22
+  Booking tax) → nothing is held; the report lists it for the owner to check.
+- Nothing is EVER auto-confirmed as paid from an amount match.
+
+Commit and push state if anything was held.
+
 ## Step 3 — Create the SumUp payment link
 
 Only for reservations in the plan's "Send payment link now" group that do not yet

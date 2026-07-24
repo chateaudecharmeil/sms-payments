@@ -163,6 +163,49 @@ function verifyQuietly() {
   }
 }
 
+/**
+ * Read-only: list successful card transactions since a date, oldest first.
+ * Used by the reconciliation step to detect payments collected locally
+ * (card reader at the property) so a guest who already paid is never chased.
+ * Prints JSON: [{ transaction_id, timestamp, amount, currency, status, payment_type, type }]
+ */
+function transactions(values) {
+  const since = values.since;
+  if (!since || !/^\d{4}-\d{2}-\d{2}/.test(since)) {
+    throw new Error('--since YYYY-MM-DD is required');
+  }
+  const merchantCode = process.env.SUMUP_MERCHANT_CODE
+    ?? verifyQuietly()?.merchant_profile?.merchant_code;
+  if (!merchantCode) throw new Error('could not determine the merchant code — set SUMUP_MERCHANT_CODE');
+
+  const out = [];
+  let path = `/v2.1/merchants/${encodeURIComponent(merchantCode)}/transactions/history` +
+    `?order=ascending&limit=100&oldest_time=${encodeURIComponent(`${since}T00:00:00Z`)}`;
+
+  // Follow pagination via the `next` link, capped defensively.
+  for (let page = 0; page < 20 && path; page += 1) {
+    const res = call('GET', path);
+    for (const t of res?.items ?? []) {
+      out.push({
+        transaction_id: t.transaction_id ?? t.id ?? null,
+        timestamp: t.timestamp ?? null,
+        amount: t.amount ?? null,
+        currency: t.currency ?? null,
+        status: t.status ?? null,
+        payment_type: t.payment_type ?? null,
+        type: t.type ?? null,
+        refunded_amount: t.refunded_amount ?? 0,
+      });
+    }
+    const next = (res?.links ?? []).find((l) => l.rel === 'next')?.href;
+    path = next ? `/v2.1/merchants/${encodeURIComponent(merchantCode)}/transactions/history?${next.split('?')[1] ?? ''}` : null;
+    if (next && !next.includes('?')) path = null;
+  }
+
+  console.log(JSON.stringify(out, null, 2));
+  return out;
+}
+
 function status(values) {
   const id = values['checkout-id'];
   if (!id) throw new Error('--checkout-id is required');
@@ -180,10 +223,11 @@ const { values } = parseArgs({
   options: {
     'email-id': { type: 'string' },
     'checkout-id': { type: 'string' },
+    since: { type: 'string' },
   },
 });
 
-const COMMANDS = { verify, 'create-link': createLink, status };
+const COMMANDS = { verify, 'create-link': createLink, status, transactions };
 
 try {
   const handler = COMMANDS[command];

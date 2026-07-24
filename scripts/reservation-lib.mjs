@@ -362,6 +362,62 @@ export function planReservation(reservation, today = todayISO()) {
   return { action: 'none', reason: `unknown-status:${status}` };
 }
 
+/**
+ * Detect payments that may have been collected locally (card reader at the
+ * property), so a guest who already paid at the desk is never chased.
+ *
+ * Matching is by exact amount, restricted to successful card PAYMENTs that
+ * happened on/after the day the reservation email arrived. Amount-only
+ * matching is inherently ambiguous — every Booking.com tax is €1,22 — so:
+ *   - an amount carried by exactly ONE open reservation and at least one
+ *     transaction → a confident `hold` (owner confirms paid vs keep chasing);
+ *   - an amount shared by SEVERAL open reservations → reported as `ambiguous`,
+ *     nothing is held, the owner decides.
+ * Nothing is ever auto-confirmed as paid from a transaction match.
+ */
+export function matchLocalPayments(reservations, transactions) {
+  const open = (reservations ?? []).filter(
+    (r) => r.status === 'scheduled' || r.status === 'link_sent',
+  );
+
+  const usable = (transactions ?? []).filter((t) => {
+    if (t.status !== 'SUCCESSFUL' || t.type !== 'PAYMENT') return false;
+    if (Number(t.refunded_amount ?? 0) > 0) return false;
+    return typeof t.amount === 'number' && t.amount > 0;
+  });
+
+  const byAmount = new Map();
+  for (const r of open) {
+    const key = Number(r.amountEUR).toFixed(2);
+    if (!byAmount.has(key)) byAmount.set(key, []);
+    byAmount.get(key).push(r);
+  }
+
+  const holds = [];
+  const ambiguous = [];
+
+  for (const [key, rs] of byAmount) {
+    const matches = usable.filter((t) => {
+      if (t.amount.toFixed(2) !== key) return false;
+      // Payment must not predate the earliest booking email for this amount.
+      const earliest = rs.reduce(
+        (min, r) => (r.createdAt && r.createdAt < min ? r.createdAt : min),
+        rs[0].createdAt ?? '9999',
+      );
+      return !t.timestamp || t.timestamp >= earliest.slice(0, 10);
+    });
+    if (!matches.length) continue;
+
+    if (rs.length === 1) {
+      holds.push({ reservation: rs[0], transactions: matches });
+    } else {
+      ambiguous.push({ amountEUR: key, reservations: rs, transactions: matches });
+    }
+  }
+
+  return { holds, ambiguous };
+}
+
 /** Plan every reservation; returns the ones that need work today. */
 export function planRun(state, today = todayISO()) {
   const due = { sendLink: [], remind: [], waiting: [], idle: [] };

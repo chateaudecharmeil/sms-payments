@@ -11,6 +11,7 @@ import {
   formatDateFR,
   isUsableEmail,
   isZeroAmount,
+  matchLocalPayments,
   normalizePhone,
   parseAmountEUR,
   parseFrenchDate,
@@ -238,4 +239,57 @@ test('welcome and reminder carry the payment link, confirmation does not', () =>
 
 test('messages show the arrival date in French format', () => {
   assert.ok(buildMessage('welcome', base).includes('14/08/2026'));
+});
+
+// --- local-payment reconciliation -----------------------------------------
+
+const resa = (over) => ({
+  emailId: 'e1', customerName: 'Marc Oberson', lastName: 'OBERSON',
+  amountEUR: '226.82', status: 'scheduled', createdAt: '2026-07-24T10:00:00Z',
+  linkSentOn: null, ...over,
+});
+const tx = (over) => ({
+  transaction_id: 'TX1', timestamp: '2026-07-25T14:00:00Z', amount: 226.82,
+  currency: 'EUR', status: 'SUCCESSFUL', payment_type: 'POS', type: 'PAYMENT',
+  refunded_amount: 0, ...over,
+});
+
+test('holds a unique amount match for owner confirmation', () => {
+  const { holds, ambiguous } = matchLocalPayments([resa()], [tx()]);
+  assert.equal(holds.length, 1);
+  assert.equal(holds[0].reservation.emailId, 'e1');
+  assert.equal(ambiguous.length, 0);
+});
+
+test('shared amounts are reported as ambiguous, never held', () => {
+  const rs = [
+    resa({ emailId: 'a', amountEUR: '1.22', lastName: 'MICHELI' }),
+    resa({ emailId: 'b', amountEUR: '1.22', lastName: 'JANIN' }),
+  ];
+  const { holds, ambiguous } = matchLocalPayments(rs, [tx({ amount: 1.22 })]);
+  assert.equal(holds.length, 0);
+  assert.equal(ambiguous.length, 1);
+  assert.equal(ambiguous[0].reservations.length, 2);
+});
+
+test('ignores refunds, failures, non-payments and pre-booking transactions', () => {
+  const cases = [
+    tx({ status: 'FAILED' }),
+    tx({ type: 'REFUND' }),
+    tx({ refunded_amount: 226.82 }),
+    tx({ timestamp: '2026-07-01T10:00:00Z' }),   // before the booking existed
+    tx({ amount: 226.81 }),                       // wrong amount
+  ];
+  const { holds, ambiguous } = matchLocalPayments([resa()], cases);
+  assert.equal(holds.length, 0);
+  assert.equal(ambiguous.length, 0);
+});
+
+test('paid and held reservations are not matched again', () => {
+  const rs = [
+    resa({ status: 'paid_confirmed' }),
+    resa({ emailId: 'e2', status: 'needs_attention' }),
+  ];
+  const { holds, ambiguous } = matchLocalPayments(rs, [tx()]);
+  assert.equal(holds.length + ambiguous.length, 0);
 });
